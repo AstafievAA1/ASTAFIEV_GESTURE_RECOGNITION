@@ -1,0 +1,45 @@
+user alexeyaa staff;
+server {
+        listen 80;
+	return 301 https://$host$request_uri;
+}
+server {
+        listen 443 ssl;
+
+        ssl_certificate     /Users/alexeyaa/Desktop/JetBotUI/certs/localhost+2.pem;
+        ssl_certificate_key /Users/alexeyaa/Desktop/JetBotUI/certs/localhost+2-key.pem;
+
+        ssl_protocols       TLSv1.2 TLSv1.3;
+        ssl_ciphers         HIGH:!aNULL:!MD5;
+
+        root  /Users/alexeyaa/Desktop/JetBotUI/jetbot_ui/dist;
+        index index.html;
+
+        # React SPA
+        location / {
+            try_files $uri $uri/ /index.html;
+	}
+
+        # WebRTC камера — Jetson
+	location /camera {
+            proxy_pass         http://192.168.0.106:8554/camera;
+            proxy_http_version 1.1;
+            proxy_set_header   Upgrade    $http_upgrade;
+            proxy_set_header   Connection "upgrade";
+            proxy_set_header   Host       $host;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+	}
+	# LSTM сервер
+	location /lstm {
+            proxy_pass         http://localhost:8765;
+            proxy_http_version 1.1;
+            proxy_set_header   Upgrade    $http_upgrade;
+            proxy_set_header   Connection "upgrade";
+            proxy_set_header   Host       $host;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+	    proxy_buffering    off;
+            proxy_buffer_size  4k;
+        }
+}
