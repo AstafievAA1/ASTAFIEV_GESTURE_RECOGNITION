@@ -1,0 +1,78 @@
+import sys
+import time
+import signal
+
+sys.path.insert(0, '/home/jetbot/jetson-inference/build/aarch64/lib/python/3.6')
+import jetson_utils_python as jetson_utils
+
+running = True
+
+def shutdown(sig, frame):
+    global running
+    print("\n Остановка...")
+    running = False
+
+signal.signal(signal.SIGINT,  shutdown)
+signal.signal(signal.SIGTERM, shutdown)
+
+
+def create_camera():
+    return jetson_utils.videoSource(
+        "csi://0",
+    )
+
+
+def create_output():
+    return jetson_utils.videoOutput(
+        "webrtc://@:8554/camera",
+        argv=["--headless"]
+    )
+
+
+def main():
+    print("WebRTC запущен")
+    print("ws://0.0.0.0:8554/camera")
+    print("Ожидание подключения клиентов...")
+
+    camera = create_camera()
+    output = create_output()
+
+    frame_count     = 0
+    timeout_count   = 0
+    MAX_TIMEOUTS    = 30  
+
+    while running:
+        try:
+            frame = camera.Capture(timeout=100)  
+
+            if frame is None:
+                timeout_count += 1
+                if timeout_count >= MAX_TIMEOUTS:
+                    print(f"{MAX_TIMEOUTS} таймаутов — перезапуск камеры...")
+                    del camera
+                    del output
+                    time.sleep(1)
+                    camera        = create_camera()
+                    output        = create_output()
+                    timeout_count = 0
+                    frame_count   = 0
+                    print(" Камера перезапущена")
+                continue
+
+            timeout_count = 0
+            output.Render(frame)
+            frame_count += 1
+
+            if frame_count % 300 == 0:
+                print(f"Отправлено кадров: {frame_count}")
+
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            timeout_count += 1
+            time.sleep(0.1)
+
+    print("Сервер остановлен")
+
+
+if __name__ == "__main__":
+    main()

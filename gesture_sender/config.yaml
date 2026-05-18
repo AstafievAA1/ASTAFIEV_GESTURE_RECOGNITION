@@ -1,0 +1,46 @@
+data:
+  models_path: "data/"
+
+inference_online:
+  min_frames_to_decide: 7
+  confidence_threshold: 0.90
+  smoothing_window: 5
+  hard_reset_timeout: 1.5
+
+gestures:
+  actions:
+    - "turn_left"
+    - "turn_right"
+    - "go_back"
+    - "go_forward"
+    - "look_around"
+    - "stop"
+    - "make_photo"
+    - "no_gesture"
+
+  gesture_to_cmd:
+    turn_left:   "LEFT"
+    turn_right:  "RIGHT"
+    go_back:     "BACKWARD"
+    go_forward:  "FORWARD"
+    look_around: "LOOK"
+    stop:        "STOP"
+    make_photo:  "PHOTO"
+    no_gesture:  ""
+
+model:
+  input_size: 152
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.5
+
+robot:
+  host: "192.168.1.106"
+  port: 9000
+  reconnect_interval: 10.0
+
+server:
+  host: "0.0.0.0"
+  port: 8765
+
+device: "auto"
